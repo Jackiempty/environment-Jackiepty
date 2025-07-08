@@ -61,3 +61,16 @@ RUN apt-get install -y bzip2 && \
 USER $USERNAME
 
 # stage verilator_provider
+FROM base AS verilator_provider
+
+USER root
+
+RUN apt-get install -y \
+    make autoconf g++ flex bison help2man && \
+    git clone https://github.com/verilator/verilator.git && \
+    cd verilator && \
+    git checkout stable && \
+    autoconf && ./configure && make -j$(nproc) && make install && \
+    rm -rf /var/lib/apt/lists/*
+
+USER $USERNAME

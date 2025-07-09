@@ -46,7 +46,7 @@ RUN apt-get install -y vim git curl wget ca-certificates build-essential python3
 ARG CONDA_DIR=/opt/conda
 ENV PATH=$CONDA_DIR/bin:$PATH
 
-RUN apt-get install -y bzip2 && \
+RUN apt-get update && apt-get install -y bzip2 && \
     ARCH=$(uname -m) && \
     case "$ARCH" in \
       x86_64)  URL=https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh ;; \
@@ -65,12 +65,29 @@ FROM base AS verilator_provider
 
 USER root
 
-RUN apt-get install -y \
+RUN apt-get update && apt-get install -y \
     make autoconf g++ flex bison help2man && \
     git clone https://github.com/verilator/verilator.git && \
     cd verilator && \
     git checkout stable && \
     autoconf && ./configure && make -j$(nproc) && make install && \
     rm -rf /var/lib/apt/lists/*
+
+USER $USERNAME
+
+# stage systemc_provider
+FROM base AS systemc_provider
+
+USER root
+
+RUN apt-get update && apt-get install -y wget tar autoconf automake libtool && \
+    wget https://github.com/accellera-official/systemc/archive/refs/tags/2.3.4.tar.gz && \
+    tar -xzf 2.3.4.tar.gz && \
+    cd systemc-2.3.4 && \
+    mkdir objdir && autoreconf -i && cd objdir && \
+    ../configure --prefix=/opt/systemc-2.3.4 && \
+    make -j$(nproc) && make install
+
+ENV SYSTEMC_HOME=/opt/systemc-2.3.4
 
 USER $USERNAME

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM ubuntu:24.04 AS base
+FROM ubuntu:24.04 AS builder
 
 ## set as non-interactive mode
 ENV DEBIAN_FRONTEND=noninteractive
@@ -10,8 +10,8 @@ ENV TZ=Asia/Taipei
 ## update system
 RUN apt-get update && apt-get upgrade -y
 
-## install bash and python
-RUN apt-get install -y bash && apt-get install -y python3 python3-pip
+## install bash
+RUN apt-get install -y bash
 
 ## set default shell as bash
 CMD ["/bin/bash"]
@@ -32,19 +32,18 @@ USER $USERNAME
 WORKDIR /home/$USERNAME
 
 # stage common_pkg_provider
-FROM base AS common_pkg_provider
+FROM builder AS common_pkg_provider
 
 ## switch to root
 USER root
 
 ## install vim, git and pip
-RUN apt-get install -y vim git curl wget ca-certificates build-essential python3 python3-pip && \
+RUN apt-get update && apt-get install -y vim git curl wget ca-certificates build-essential python3 python3-pip && \
     ln -s /usr/bin/python3 /usr/bin/python && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ## install conda according to cpu's ISA
 ARG CONDA_DIR=/opt/conda
-ENV PATH=$CONDA_DIR/bin:$PATH
 
 RUN apt-get update && apt-get install -y bzip2 && \
     ARCH=$(uname -m) && \
@@ -61,22 +60,23 @@ RUN apt-get update && apt-get install -y bzip2 && \
 USER $USERNAME
 
 # stage verilator_provider
-FROM base AS verilator_provider
+FROM builder AS verilator_provider
 
 USER root
 
 RUN apt-get update && apt-get install -y \
-    make autoconf g++ flex bison help2man && \
+    git make autoconf g++ flex bison help2man && \
     git clone https://github.com/verilator/verilator.git && \
     cd verilator && \
     git checkout stable && \
     autoconf && ./configure && make -j$(nproc) && make install && \
+    cd .. && rm -rf verilator && \
     rm -rf /var/lib/apt/lists/*
 
 USER $USERNAME
 
 # stage systemc_provider
-FROM base AS systemc_provider
+FROM builder AS systemc_provider
 
 USER root
 
@@ -86,8 +86,21 @@ RUN apt-get update && apt-get install -y wget tar autoconf automake libtool && \
     cd systemc-2.3.4 && \
     mkdir objdir && autoreconf -i && cd objdir && \
     ../configure --prefix=/opt/systemc-2.3.4 && \
-    make -j$(nproc) && make install
+    make -j$(nproc) && make install && \
+    cd .. && rm -rf 2.3.4.tar.gz systemc-2.3.4 && \
+    rm -rf /var/lib/apt/lists/*
 
 ENV SYSTEMC_HOME=/opt/systemc-2.3.4
 
 USER $USERNAME
+
+# stage base to copy all other stage
+FROM builder AS base
+
+COPY --from=common_pkg_provider /usr /usr
+COPY --from=common_pkg_provider /opt/conda /opt/conda
+COPY --from=verilator_provider /usr/local /usr/local
+COPY --from=systemc_provider /opt/systemc-2.3.4 /opt/systemc-2.3.4
+
+ENV SYSTEMC_HOME=/opt/systemc-2.3.4
+ENV PATH=/opt/conda/bin:$PATH

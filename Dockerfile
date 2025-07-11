@@ -55,6 +55,7 @@ RUN apt-get update && apt-get install -y bzip2 && \
     curl -fsSL $URL -o miniconda.sh && \
     bash miniconda.sh -b -p $CONDA_DIR && \
     rm miniconda.sh && \
+    $CONDA_DIR/bin/conda init --all && \
     ln -s $CONDA_DIR/etc/profile.d/conda.sh /etc/profile.d/conda.sh
 
 USER $USERNAME
@@ -65,7 +66,7 @@ FROM builder AS verilator_provider
 USER root
 
 RUN apt-get update && apt-get install -y \
-    git make autoconf g++ flex bison help2man && \
+    python3 python3-pip git make autoconf g++ flex bison help2man && \
     git clone https://github.com/verilator/verilator.git && \
     cd verilator && \
     git checkout stable && \
@@ -80,14 +81,15 @@ FROM builder AS systemc_provider
 
 USER root
 
-RUN apt-get update && apt-get install -y wget tar autoconf automake libtool && \
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y wget tar autoconf automake libtool g++ make && \
     wget https://github.com/accellera-official/systemc/archive/refs/tags/2.3.4.tar.gz && \
     tar -xzf 2.3.4.tar.gz && \
     cd systemc-2.3.4 && \
     mkdir objdir && autoreconf -i && cd objdir && \
     ../configure --prefix=/opt/systemc-2.3.4 && \
     make -j$(nproc) && make install && \
-    cd .. && rm -rf 2.3.4.tar.gz systemc-2.3.4 && \
+    cd .. && rm -rf 2.3.4.tar.gz && rm -rf systemc-2.3.4 && \
     rm -rf /var/lib/apt/lists/*
 
 ENV SYSTEMC_HOME=/opt/systemc-2.3.4
@@ -95,12 +97,11 @@ ENV SYSTEMC_HOME=/opt/systemc-2.3.4
 USER $USERNAME
 
 # stage base to copy all other stage
-FROM builder AS base
+FROM common_pkg_provider AS base
 
-COPY --from=common_pkg_provider /usr /usr
-COPY --from=common_pkg_provider /opt/conda /opt/conda
+RUN $CONDA_DIR/bin/conda init --all
+
 COPY --from=verilator_provider /usr/local /usr/local
 COPY --from=systemc_provider /opt/systemc-2.3.4 /opt/systemc-2.3.4
 
 ENV SYSTEMC_HOME=/opt/systemc-2.3.4
-ENV PATH=/opt/conda/bin:$PATH

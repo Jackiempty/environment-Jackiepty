@@ -4,8 +4,14 @@ CC := g++
 CFLAGS := -Wall -Wextra
 
 SYSTEMC_HOME := /opt/systemc-2.3.4
-# TODO: Design a pattern to determine the arch and set the correct loader directory name
-lib := lib-linuxaarch64
+
+ARCH := $(shell uname -m)
+ifeq ($(ARCH), aarch64)
+    lib := lib-linuxaarch64
+else
+    lib := lib-linux
+endif
+
 INCLUDE_DIR := ${SYSTEMC_HOME}/include
 LINK_DIR := ${SYSTEMC_HOME}/${lib}
 BUILD_DIR := build

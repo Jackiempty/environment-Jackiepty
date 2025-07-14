@@ -9,7 +9,7 @@ ARCH := $(shell uname -m)
 ifeq ($(ARCH), aarch64)
     lib := lib-linuxaarch64
 else
-    lib := lib-linux
+    lib := lib-linux64
 endif
 
 INCLUDE_DIR := ${SYSTEMC_HOME}/include

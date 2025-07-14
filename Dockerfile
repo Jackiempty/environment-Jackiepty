@@ -88,7 +88,7 @@ RUN apt-get update && apt-get upgrade -y && \
     mkdir objdir && autoreconf -i && cd objdir && \
     ../configure --prefix=/opt/systemc-2.3.4 && \
     make -j$(nproc) && make install && \
-    cd .. && rm -rf 2.3.4.tar.gz && rm -rf systemc-2.3.4 && \
+    cd ../.. && rm -rf 2.3.4.tar.gz && rm -rf systemc-2.3.4 && \
     rm -rf /var/lib/apt/lists/*
 
 ENV SYSTEMC_HOME=/opt/systemc-2.3.4

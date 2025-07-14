@@ -1,5 +1,3 @@
-sudo docker build -t aoc2026-env .
-
 #!/bin/bash
 
 # default parameters
@@ -12,7 +10,7 @@ MOUNT_PATHS=()
 # --- Parse CLI ---
 while [[ $# -gt 0 ]]; do
   case $1 in
-    run|clean|rebuild)
+    run|clean|rebuild|help)
       COMMAND=$1
       shift
       ;;
@@ -50,7 +48,7 @@ build_image() {
     echo "You can delete it with: docker rmi $IMAGE_NAME"
   else
     echo "Building Docker image '$IMAGE_NAME'..."
-    docker build -t "$IMAGE_NAME" .
+    docker build -t "$IMAGE_NAME" . --no-cache
   fi
 }
 
@@ -59,6 +57,7 @@ run_container() {
   CONTAINER_STATUS=$(docker ps -a --filter "name=^/${CONTAINER_NAME}$" --format '{{.Status}}')
 
   # mount path
+  # TODO: set eman script mounting position (and other test scripts')
   MOUNTS_ARGS=""
   for path in "${MOUNT_PATHS[@]}"; do
     abs_path=$(realpath "$path")
@@ -109,11 +108,19 @@ case "$COMMAND" in
   rebuild)
     rebuild_all
     ;;
-  *)
+  help)
     echo "Usage:"
-    echo "  $0 run [--image-name <name>] [--cont-name <name>] [--username <user>] [--hostname <name>] [--mount <path>]..."
+    echo "  $0 run [--image-name <image name>] [--cont-name <container name>] [--username <user>] [--hostname <name>] [--mount <path>]..."
     echo "  $0 clean"
     echo "  $0 rebuild"
+    echo "  $0 help"
+    ;;
+  *)
+    echo "Usage:"
+    echo "  $0 run [--image-name <image name>] [--cont-name <container name>] [--username <user>] [--hostname <name>] [--mount <path>]..."
+    echo "  $0 clean"
+    echo "  $0 rebuild"
+    echo "  $0 help"
     exit 1
     ;;
 esac

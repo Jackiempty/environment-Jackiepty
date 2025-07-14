@@ -55,7 +55,6 @@ RUN apt-get update && apt-get install -y bzip2 && \
     curl -fsSL $URL -o miniconda.sh && \
     bash miniconda.sh -b -p $CONDA_DIR && \
     rm miniconda.sh && \
-    $CONDA_DIR/bin/conda init --all && \
     ln -s $CONDA_DIR/etc/profile.d/conda.sh /etc/profile.d/conda.sh
 
 USER $USERNAME

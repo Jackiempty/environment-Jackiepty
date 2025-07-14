@@ -12,10 +12,11 @@ run: $(BIN)
 	./$<
 
 obj_dir/V%: %.v $(TB_SRC)
+	@mkdir -p obj_dir
 	$(VC) $(VFLAGS) $^
 
 format:
-	clang-format -i tb/*.cpp
+	clang-format -i testbench.cc tb/*.cpp
 
 clean:
 	$(RM) -rv obj_dir *.vcd

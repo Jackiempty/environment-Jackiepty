@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# manually build cmd: docker run -dit --name full_test_1 -p 2223:22 -v ./test:/home/myuser/test aoc2026-env /bin/bash
+# manually build cmd: docker build -t jackiempty/aoc2026-env . --no-cache
+# manually run cmd: docker run -dit --name full_test_1 -p 2223:22 -v ./test:/home/myuser/test jackiempty/aoc2026-env /bin/bash
 
 # default parameters
-IMAGE_NAME="aoc2026-env"
+IMAGE_NAME="jackiempty/aoc2026-env"
 CONTAINER_NAME="aoc2026-container"
 MOUNT_PATHS=()
 

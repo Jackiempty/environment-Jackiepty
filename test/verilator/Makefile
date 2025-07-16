@@ -7,8 +7,6 @@ VC = verilator
 .PHONY: all clean format run
 
 all: $(BIN)
-
-run: $(BIN)
 	./$<
 
 obj_dir/V%: %.v $(TB_SRC)

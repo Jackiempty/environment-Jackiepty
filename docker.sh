@@ -1,10 +1,10 @@
 #!/bin/bash
 
+# manually build cmd: docker run -dit --name full_test_1 -p 2223:22 -v ./test:/home/myuser/test aoc2026-env /bin/bash
+
 # default parameters
 IMAGE_NAME="aoc2026-env"
 CONTAINER_NAME="aoc2026-container"
-USERNAME="$USER"
-HOSTNAME="aoc2026"
 MOUNT_PATHS=()
 
 # --- Parse CLI ---
@@ -75,9 +75,8 @@ run_container() {
 
   else
     echo "Creating and starting new container '$CONTAINER_NAME'..."
-    docker run -it --name "$CONTAINER_NAME" \
-      --hostname "$HOSTNAME" \
-      --env USER="$USERNAME" \
+    docker run -dit --name "$CONTAINER_NAME" \
+      -p 2222:22 \
       $MOUNTS_ARGS \
       "$IMAGE_NAME" /bin/bash
   fi
@@ -110,14 +109,14 @@ case "$COMMAND" in
     ;;
   help)
     echo "Usage:"
-    echo "  $0 run [--image-name <image name>] [--cont-name <container name>] [--username <user>] [--hostname <name>] [--mount <path>]..."
+    echo "  $0 run [--image-name <image name>] [--cont-name <container name>] [--mount <path>]..."
     echo "  $0 clean"
     echo "  $0 rebuild"
     echo "  $0 help"
     ;;
   *)
     echo "Usage:"
-    echo "  $0 run [--image-name <image name>] [--cont-name <container name>] [--username <user>] [--hostname <name>] [--mount <path>]..."
+    echo "  $0 run [--image-name <image name>] [--cont-name <container name>] [--mount <path>]..."
     echo "  $0 clean"
     echo "  $0 rebuild"
     echo "  $0 help"

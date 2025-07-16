@@ -2,6 +2,7 @@
 
 # manually build cmd: docker build -t jackiempty/aoc2026-env . --no-cache
 # manually run cmd: docker run -dit --name full_test_1 -p 2223:22 -v ./test:/home/myuser/test jackiempty/aoc2026-env /bin/bash
+# push image to cloud: docker push jackiempty/aoc2026-env
 
 # default parameters
 IMAGE_NAME="jackiempty/aoc2026-env"
@@ -78,6 +79,7 @@ run_container() {
     echo "Creating and starting new container '$CONTAINER_NAME'..."
     docker run -dit --name "$CONTAINER_NAME" \
       -p 2222:22 \
+      -v ./test:/home/myuser/test
       $MOUNTS_ARGS \
       "$IMAGE_NAME" /bin/bash
   fi

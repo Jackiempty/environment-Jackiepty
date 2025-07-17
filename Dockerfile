@@ -7,11 +7,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 ## set time zone env var
 ENV TZ=Asia/Taipei
 
-## update system
 RUN apt-get update && apt-get upgrade -y
 
-## install bash
-RUN apt-get install -y bash
+RUN apt-get install -y bash openssh-server sudo
 
 ## set default shell as bash
 CMD ["/bin/bash"]
@@ -23,19 +21,12 @@ ARG GID=1001
 
 RUN groupadd --gid $GID $USERNAME && \
     useradd --uid $UID --gid $GID --create-home --shell /bin/bash $USERNAME && \
-    echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+    echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/"${USERNAME}" && \
+    passwd -d "${USERNAME}"
 
-## switch to non-root user
-USER $USERNAME
-
-## set default working directory
-WORKDIR /home/$USERNAME
 
 # stage common_pkg_provider
 FROM builder AS common_pkg_provider
-
-## switch to root
-USER root
 
 ## install vim, git and pip
 RUN apt-get update && apt-get install -y vim git curl wget ca-certificates build-essential python3 python3-pip && \
@@ -57,12 +48,8 @@ RUN apt-get update && apt-get install -y bzip2 && \
     rm miniconda.sh && \
     ln -s $CONDA_DIR/etc/profile.d/conda.sh /etc/profile.d/conda.sh
 
-USER $USERNAME
-
 # stage verilator_provider
 FROM builder AS verilator_provider
-
-USER root
 
 RUN apt-get update && apt-get install -y \
     python3 python3-pip git make autoconf g++ flex bison help2man && \
@@ -73,12 +60,8 @@ RUN apt-get update && apt-get install -y \
     cd .. && rm -rf verilator && \
     rm -rf /var/lib/apt/lists/*
 
-USER $USERNAME
-
 # stage systemc_provider
 FROM builder AS systemc_provider
-
-USER root
 
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y wget tar autoconf automake libtool g++ make && \
@@ -93,14 +76,19 @@ RUN apt-get update && apt-get upgrade -y && \
 
 ENV SYSTEMC_HOME=/opt/systemc-2.3.4
 
-USER $USERNAME
-
 # stage base to copy all other stage
 FROM common_pkg_provider AS base
-
-RUN $CONDA_DIR/bin/conda init --all
 
 COPY --from=verilator_provider /usr/local /usr/local
 COPY --from=systemc_provider /opt/systemc-2.3.4 /opt/systemc-2.3.4
 
+COPY ./eman.sh /usr/local/bin/eman
+RUN chmod +x /usr/local/bin/eman
+
 ENV SYSTEMC_HOME=/opt/systemc-2.3.4
+
+USER $USERNAME
+
+WORKDIR /home/$USERNAME
+
+RUN $CONDA_DIR/bin/conda init --all

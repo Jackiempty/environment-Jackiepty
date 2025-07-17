@@ -33,7 +33,7 @@ c_compiler_version() {
 
 c_compiler_example() {
     echo "[C Compiler Example]"
-    cd c-compiler 
+    cd "${HOME}"/test/c-compiler
     make
 }
 
@@ -48,13 +48,13 @@ check_verilator() {
 
 verilator_example() {
     echo "[Verilator Example]"
-    cd verilator
+    cd "${HOME}"/test/verilator
     make
 }
 
 systemc_example() {
     echo "[System C Example]"
-    cd systemc
+    cd "${HOME}"/test/systemc
     make
 }
 
